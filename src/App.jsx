@@ -12,8 +12,10 @@ import VimshottariDasha from "./components/VimshottariDasha";
 import DoshaYogaChecker from "./components/DoshaYogaChecker";
 import RemediesView from "./components/RemediesView";
 import GunMilan from "./components/GunMilan";
+import LifePredictions from "./components/LifePredictions";
 import AstrologerNotesModal from "./components/AstrologerNotesModal";
 import SavedChartsDrawer from "./components/SavedChartsDrawer";
+import { generateLifeInterpretations } from "./utils/interpretationEngine";
 
 import {
   calculateJulianDay,
@@ -57,7 +59,8 @@ export default function App() {
   });
 
   const [chartStyle, setChartStyle] = useState("north"); // "north" | "south"
-  const [activeTab, setActiveTab] = useState("charts"); // "charts" | "vargas" | "dasha" | "doshas" | "bhavas" | "milan" | "remedies"
+  const [chartViewMode, setChartViewMode] = useState("d1"); // "d1" | "d9" | "dual"
+  const [activeTab, setActiveTab] = useState("charts"); // "charts" | "predictions" | "milan" | "vargas" | "dasha" | "doshas" | "bhavas" | "remedies"
   const [activeHouse, setActiveHouse] = useState(null);
   const [activePlanet, setActivePlanet] = useState(null);
   const [soundOn, setSoundOn] = useState(true);
@@ -164,15 +167,22 @@ export default function App() {
     });
   };
 
+  // Generate life interpretations for Career, Marriage, Wealth, Relationships, Health
+  const lifeInterpretations = useMemo(() => {
+    if (!kundli) return null;
+    return generateLifeInterpretations(kundli, formData);
+  }, [kundli, formData]);
+
   const moonPlanet = kundli?.planets?.find((p) => p.id === "Moon");
 
   const navTabs = [
     { key: "charts", label: "Birth Chart & Planets", icon: Compass },
+    { key: "predictions", label: "Life Predictions (Career, Marriage, Money)", icon: Sparkles },
+    { key: "milan", label: "Kundli Matching (36 Guna)", icon: Heart },
     { key: "vargas", label: "Divisional Charts (D9/D10/D7)", icon: Layers },
     { key: "dasha", label: "Vimshottari Mahadasha", icon: Clock },
     { key: "doshas", label: "Doshas & Raj Yogas", icon: ShieldAlert },
     { key: "bhavas", label: "12 Houses (Bhavas)", icon: Grid },
-    { key: "milan", label: "36 Guna Match (Milan)", icon: Heart },
     { key: "remedies", label: "Gemstones & Remedies", icon: Gem }
   ];
 
@@ -301,57 +311,206 @@ export default function App() {
               {/* Tab 1: Charts & Planetary Positions */}
               {activeTab === "charts" && (
                 <div className="charts-tab-content">
-                  <div className="chart-and-graha-layout">
-                    <div className="chart-col">
-                      {chartStyle === "north" ? (
-                        <NorthIndianChart
-                          chartData={kundli.divisionals.D1}
-                          title="Lagna Kundli (D-1 Rashi Chart)"
-                          onSelectHouse={(h) => {
-                            playSoftClick();
-                            setActiveHouse(activeHouse === h ? null : h);
-                          }}
-                          onSelectPlanet={(p) => {
-                            playSoftClick();
-                            setActivePlanet(activePlanet?.id === p.id ? null : p);
-                          }}
-                          activePlanet={activePlanet}
-                          activeHouse={activeHouse}
-                        />
-                      ) : (
-                        <SouthIndianChart
-                          chartData={kundli.divisionals.D1}
-                          title="Lagna Kundli (South Indian D-1 Chart)"
-                          onSelectHouse={(h) => {
-                            playSoftClick();
-                            setActiveHouse(activeHouse === h ? null : h);
-                          }}
-                          onSelectPlanet={(p) => {
-                            playSoftClick();
-                            setActivePlanet(activePlanet?.id === p.id ? null : p);
-                          }}
-                          activePlanet={activePlanet}
-                          activeHouse={activeHouse}
-                        />
-                      )}
+                  {/* Lagna (D-1) vs Navamsha (D-9) vs Dual View Toggles */}
+                  <div className="chart-view-selector-bar glass-card">
+                    <div className="view-mode-buttons">
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${chartViewMode === "d1" ? "active" : ""}`}
+                        onClick={() => {
+                          playSoftClick();
+                          setChartViewMode("d1");
+                        }}
+                      >
+                        <Compass size={15} />
+                        <span>Lagna Chart (D-1)</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${chartViewMode === "d9" ? "active" : ""}`}
+                        onClick={() => {
+                          playSoftClick();
+                          setChartViewMode("d9");
+                        }}
+                      >
+                        <Layers size={15} />
+                        <span>Navamsha Chart (D-9)</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${chartViewMode === "dual" ? "active" : ""}`}
+                        onClick={() => {
+                          playSoftClick();
+                          setChartViewMode("dual");
+                        }}
+                      >
+                        <Sparkles size={15} />
+                        <span>Dual View (D-1 & D-9)</span>
+                      </button>
                     </div>
 
-                    <div className="table-col">
-                      <GrahaTable
-                        planets={kundli.planets}
-                        ascendant={kundli.ascendant}
-                        onSelectPlanet={(p) => {
-                          playSoftClick();
-                          setActivePlanet(activePlanet?.id === p.id ? null : p);
-                        }}
-                        activePlanet={activePlanet}
-                      />
+                    <div className="chart-mode-info-tag">
+                      {chartViewMode === "d1" && <span><strong>Lagna Kundli (D-1):</strong> Physical constitution, life foundation & ascendant houses</span>}
+                      {chartViewMode === "d9" && <span><strong>Navamsha Kundli (D-9):</strong> Soul's destiny, marriage fruitfulness & inner planetary strength</span>}
+                      {chartViewMode === "dual" && <span><strong>Side-by-Side Comparison:</strong> Lagna (D-1) & Navamsha (D-9) viewed together</span>}
                     </div>
                   </div>
+
+                  {chartViewMode === "dual" ? (
+                    <div className="dual-charts-wrapper">
+                      <div className="dual-charts-side-by-side">
+                        <div className="chart-col-half">
+                          {chartStyle === "north" ? (
+                            <NorthIndianChart
+                              chartData={kundli.divisionals.D1}
+                              title="Lagna Kundli (D-1 Rashi)"
+                              onSelectHouse={(h) => {
+                                playSoftClick();
+                                setActiveHouse(activeHouse === h ? null : h);
+                              }}
+                              onSelectPlanet={(p) => {
+                                playSoftClick();
+                                setActivePlanet(activePlanet?.id === p.id ? null : p);
+                              }}
+                              activePlanet={activePlanet}
+                              activeHouse={activeHouse}
+                            />
+                          ) : (
+                            <SouthIndianChart
+                              chartData={kundli.divisionals.D1}
+                              title="Lagna Kundli (D-1 South Indian)"
+                              onSelectHouse={(h) => {
+                                playSoftClick();
+                                setActiveHouse(activeHouse === h ? null : h);
+                              }}
+                              onSelectPlanet={(p) => {
+                                playSoftClick();
+                                setActivePlanet(activePlanet?.id === p.id ? null : p);
+                              }}
+                              activePlanet={activePlanet}
+                              activeHouse={activeHouse}
+                            />
+                          )}
+                        </div>
+
+                        <div className="chart-col-half">
+                          {chartStyle === "north" ? (
+                            <NorthIndianChart
+                              chartData={kundli.divisionals.D9}
+                              title="Navamsha Kundli (D-9 Navamsha)"
+                              onSelectHouse={(h) => {
+                                playSoftClick();
+                                setActiveHouse(activeHouse === h ? null : h);
+                              }}
+                              onSelectPlanet={(p) => {
+                                playSoftClick();
+                                setActivePlanet(activePlanet?.id === p.id ? null : p);
+                              }}
+                              activePlanet={activePlanet}
+                              activeHouse={activeHouse}
+                            />
+                          ) : (
+                            <SouthIndianChart
+                              chartData={kundli.divisionals.D9}
+                              title="Navamsha Kundli (D-9 South Indian)"
+                              onSelectHouse={(h) => {
+                                playSoftClick();
+                                setActiveHouse(activeHouse === h ? null : h);
+                              }}
+                              onSelectPlanet={(p) => {
+                                playSoftClick();
+                                setActivePlanet(activePlanet?.id === p.id ? null : p);
+                              }}
+                              activePlanet={activePlanet}
+                              activeHouse={activeHouse}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="dual-table-section">
+                        <GrahaTable
+                          planets={kundli.planets}
+                          ascendant={kundli.ascendant}
+                          onSelectPlanet={(p) => {
+                            playSoftClick();
+                            setActivePlanet(activePlanet?.id === p.id ? null : p);
+                          }}
+                          activePlanet={activePlanet}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="chart-and-graha-layout">
+                      <div className="chart-col">
+                        {chartStyle === "north" ? (
+                          <NorthIndianChart
+                            chartData={chartViewMode === "d9" ? kundli.divisionals.D9 : kundli.divisionals.D1}
+                            title={chartViewMode === "d9" ? "Navamsha Kundli (D-9 Chart)" : "Lagna Kundli (D-1 Rashi Chart)"}
+                            onSelectHouse={(h) => {
+                              playSoftClick();
+                              setActiveHouse(activeHouse === h ? null : h);
+                            }}
+                            onSelectPlanet={(p) => {
+                              playSoftClick();
+                              setActivePlanet(activePlanet?.id === p.id ? null : p);
+                            }}
+                            activePlanet={activePlanet}
+                            activeHouse={activeHouse}
+                          />
+                        ) : (
+                          <SouthIndianChart
+                            chartData={chartViewMode === "d9" ? kundli.divisionals.D9 : kundli.divisionals.D1}
+                            title={chartViewMode === "d9" ? "Navamsha Kundli (D-9 South Indian)" : "Lagna Kundli (D-1 South Indian)"}
+                            onSelectHouse={(h) => {
+                              playSoftClick();
+                              setActiveHouse(activeHouse === h ? null : h);
+                            }}
+                            onSelectPlanet={(p) => {
+                              playSoftClick();
+                              setActivePlanet(activePlanet?.id === p.id ? null : p);
+                            }}
+                            activePlanet={activePlanet}
+                            activeHouse={activeHouse}
+                          />
+                        )}
+                      </div>
+
+                      <div className="table-col">
+                        <GrahaTable
+                          planets={kundli.planets}
+                          ascendant={kundli.ascendant}
+                          onSelectPlanet={(p) => {
+                            playSoftClick();
+                            setActivePlanet(activePlanet?.id === p.id ? null : p);
+                          }}
+                          activePlanet={activePlanet}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Tab 2: Divisional Charts */}
+              {/* Tab 2: Life Predictions & Deep Interpretations (Career, Marriage, Money, Relationships) */}
+              {activeTab === "predictions" && (
+                <LifePredictions
+                  interpretations={lifeInterpretations}
+                  clientName={formData.name}
+                />
+              )}
+
+              {/* Tab 3: 36 Guna Matrimonial Kundli Matching (Milan) */}
+              {activeTab === "milan" && (
+                <GunMilan
+                  nativeFormData={formData}
+                  nativeMoonDeg={moonPlanet?.longitude || 0}
+                  nativePlanets={kundli.planets}
+                  nativeAscendant={kundli.ascendant}
+                />
+              )}
+
+              {/* Tab 4: Divisional Charts */}
               {activeTab === "vargas" && (
                 <DivisionalCharts
                   divisionalData={kundli.divisionals}
@@ -369,17 +528,17 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 3: Vimshottari Dasha */}
+              {/* Tab 5: Vimshottari Dasha */}
               {activeTab === "dasha" && (
                 <VimshottariDasha dashaData={kundli.dasha} />
               )}
 
-              {/* Tab 4: Doshas & Auspicious Yogas */}
+              {/* Tab 6: Doshas & Auspicious Yogas */}
               {activeTab === "doshas" && (
                 <DoshaYogaChecker doshasAndYogas={kundli.doshasYogas} />
               )}
 
-              {/* Tab 5: 12 Houses (Bhavas) Analysis */}
+              {/* Tab 7: 12 Houses (Bhavas) Analysis */}
               {activeTab === "bhavas" && (
                 <BhavaAnalysis
                   houses={kundli.houses}
@@ -392,12 +551,7 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 6: 36 Guna Ashtakoot Vivah Milan */}
-              {activeTab === "milan" && (
-                <GunMilan nativeMoonDeg={moonPlanet?.longitude || 0} />
-              )}
-
-              {/* Tab 7: Gemstones & Vedic Remedies */}
+              {/* Tab 8: Gemstones & Vedic Remedies */}
               {activeTab === "remedies" && (
                 <RemediesView
                   ascendant={kundli.ascendant}
@@ -408,45 +562,127 @@ export default function App() {
           )}
         </section>
 
-        {/* Printable Astrologer Kundli Certificate (Hidden on screen, visible during Print/PDF) */}
+        {/* Printable Astrologer Kundli Certificate (Hidden on screen, strictly 1-page during Print/PDF) */}
         {kundli && (
           <div className="print-report-container">
+            {/* Header / Invocations */}
             <div className="print-header">
-              <h1>Om Shree Ganeshaya Namah</h1>
-              <h2>Vedic Birth Chart Kundli - Authorized Astrological Consultation Report</h2>
+              <div className="print-om-invoc">॥ ॐ श्री गणेशाय नमः ॥</div>
+              <h1 className="print-main-title">Vedic Birth Chart Kundli</h1>
+              <div className="print-sub-header">
+                Astrological Consultation Report • Parashara Janam Patrika
+              </div>
+
+              {/* Client & Birth Particulars Grid */}
               <div className="print-meta-grid">
-                <div>Client Name: <strong>{formData.name}</strong></div>
-                <div>Date of Birth: <strong>{formData.date}</strong></div>
-                <div>Time of Birth: <strong>{formData.time}</strong></div>
-                <div>Birth Place: <strong>{formData.city}</strong></div>
-                <div>Ascendant: <strong>{kundli.ascendant.rashi.english} ({kundli.ascendant.degFormatted})</strong></div>
-                <div>Moon Sign: <strong>{moonPlanet?.rashi?.english}</strong></div>
-                <div>Birth Nakshatra: <strong>{moonPlanet?.nakshatra?.name} (Pada {moonPlanet?.nakshatra?.pada})</strong></div>
-                <div>Ayanamsa: <strong>{formData.ayanamsa}</strong></div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Client Name:</span>
+                  <span className="pm-val"><strong>{formData.name || "Client"}</strong> ({formData.gender || "Male"})</span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Date of Birth:</span>
+                  <span className="pm-val"><strong>{formData.date}</strong></span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Time of Birth:</span>
+                  <span className="pm-val"><strong>{formData.time}</strong></span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Place of Birth:</span>
+                  <span className="pm-val"><strong>{formData.city}</strong></span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Ascendant (Lagna):</span>
+                  <span className="pm-val"><strong>{kundli.ascendant.rashi.english}</strong> ({kundli.ascendant.degFormatted})</span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Moon Sign (Rashi):</span>
+                  <span className="pm-val"><strong>{moonPlanet?.rashi?.english}</strong> ({moonPlanet?.rashi?.name})</span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Birth Nakshatra:</span>
+                  <span className="pm-val"><strong>{moonPlanet?.nakshatra?.name}</strong> (Pada {moonPlanet?.nakshatra?.pada})</span>
+                </div>
+                <div className="print-meta-cell">
+                  <span className="pm-label">Ayanamsa:</span>
+                  <span className="pm-val"><strong>{formData.ayanamsa}</strong> ({kundli.ayanamsa.toFixed(2)}°)</span>
+                </div>
               </div>
             </div>
 
-            <div className="print-chart-box">
-              <NorthIndianChart
-                chartData={kundli.divisionals.D1}
-                title="Lagna Kundli (D-1)"
-              />
+            {/* Core Section: Kundli Chart (Left) + Planets Table (Right) */}
+            <div className="print-core-grid">
+              <div className="print-chart-box">
+                {chartStyle === "north" ? (
+                  <NorthIndianChart
+                    chartData={kundli.divisionals.D1}
+                    title="Lagna Kundli (D-1)"
+                  />
+                ) : (
+                  <SouthIndianChart
+                    chartData={kundli.divisionals.D1}
+                    title="Lagna Kundli (D-1)"
+                  />
+                )}
+              </div>
+
+              <div className="print-planets-box">
+                <div className="print-box-heading">Planetary Positions (Graha Sthiti)</div>
+                <table className="print-graha-table">
+                  <thead>
+                    <tr>
+                      <th>Graha</th>
+                      <th>Rashi</th>
+                      <th>Degree</th>
+                      <th>Bhava</th>
+                      <th>Status / Dignity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kundli.planets.map((p) => (
+                      <tr key={p.id}>
+                        <td><strong>{p.name}</strong> ({p.hindi})</td>
+                        <td>{p.rashi.english}</td>
+                        <td>{p.degFormatted}</td>
+                        <td>House {p.house}</td>
+                        <td>
+                          {p.isRetrograde ? "[R] " : ""}
+                          {p.dignity.split(" ")[0]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="print-dasha-summary">
-              <h3>Current Active Vimshottari Dasha</h3>
-              <p>
-                Mahadasha: <strong>{kundli.dasha.activeMahadasha?.lord}</strong> | Antardasha: <strong>{kundli.dasha.activeAntardasha?.lord}</strong>
-              </p>
+            {/* Vimshottari Dasha Summary Strip */}
+            <div className="print-dasha-strip">
+              <div className="print-dasha-label">
+                <strong>Vimshottari Dasha:</strong>
+              </div>
+              <div className="print-dasha-items">
+                <span>Mahadasha: <strong>{kundli.dasha.activeMahadasha?.lord}</strong></span>
+                <span className="p-dot">•</span>
+                <span>Antardasha: <strong>{kundli.dasha.activeAntardasha?.lord || "Active"}</strong></span>
+                <span className="p-dot">•</span>
+                <span>Nakshatra Lord: <strong>{moonPlanet?.nakshatra?.lord}</strong></span>
+              </div>
             </div>
 
+            {/* Footer / Auspicious Blessing / Signature */}
             <div className="print-footer">
-              <div className="print-seal">
-                <div>Astrologer Signature & Seal</div>
-                <div className="seal-line">__________________________</div>
+              <div className="print-footer-info">
+                <div className="p-auth-txt">Verified Astrological Kundli Report</div>
+                <div className="p-sys-txt">Maharishi Parashara Hora Shastra Principles</div>
               </div>
-              <div className="print-blessing">
-                "May all beings be happy, healthy, prosperous, and free from suffering."
+              <div className="print-blessing-wrap">
+                <div className="p-sanskrit">॥ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥</div>
+                <div className="p-english">"May all beings be happy, healthy, prosperous and peaceful."</div>
+              </div>
+              <div className="print-seal-wrap">
+                <div className="p-seal-head">Astrologer Signature & Seal</div>
+                <div className="seal-line">__________________________</div>
               </div>
             </div>
           </div>
