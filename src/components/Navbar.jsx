@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Printer, Volume2, VolumeX, FolderHeart, FileText } from "lucide-react";
+import { Sparkles, Printer, Volume2, VolumeX, FolderHeart, FileText, Bot, BookOpen } from "lucide-react";
 import { playTempleChime, playSoftClick, setSoundEnabled } from "../utils/soundEffects";
 
 export default function Navbar({
@@ -7,7 +7,9 @@ export default function Navbar({
   setSoundOn,
   onOpenSavedDrawer,
   savedCount,
-  onOpenNotesModal
+  onOpenNotesModal,
+  onOpenAIModal,
+  onOpenPatrikaModal
 }) {
   const handleToggleSound = () => {
     const nextState = !soundOn;
@@ -16,11 +18,6 @@ export default function Navbar({
     if (nextState) {
       playTempleChime();
     }
-  };
-
-  const handlePrint = () => {
-    playSoftClick();
-    window.print();
   };
 
   return (
@@ -33,7 +30,7 @@ export default function Navbar({
           </div>
           <div className="brand-text">
             <h1 className="brand-title">AstroKundli <span>Portal</span></h1>
-            <span className="brand-sub">Vedic Astrology Suite • Professional Astrologer Edition</span>
+            <span className="brand-sub">Vedic Astrology Suite • Real-Life Brihat Janam Patrika</span>
           </div>
         </div>
 
@@ -50,6 +47,20 @@ export default function Navbar({
             <span className="btn-label">{soundOn ? "Sound On" : "Mute"}</span>
           </button>
 
+          {/* AI Pandit Ji Consultation */}
+          <button
+            type="button"
+            className="nav-btn ai-special-nav-btn glow-pulse"
+            onClick={() => {
+              playTempleChime();
+              onOpenAIModal();
+            }}
+            title="AI ज्योतिषाचार्य परामर्श (AI Pandit Ji Consultation)"
+          >
+            <Bot size={18} className="icon-gold" />
+            <span className="btn-label text-gold">AI ज्योतिषाचार्य</span>
+          </button>
+
           {/* Astrologer Notes */}
           <button
             type="button"
@@ -61,7 +72,7 @@ export default function Navbar({
             title="Astrologer Consultation Notes"
           >
             <FileText size={18} />
-            <span className="btn-label">Consultation Notes</span>
+            <span className="btn-label">Notes</span>
           </button>
 
           {/* Saved Clients */}
@@ -75,19 +86,22 @@ export default function Navbar({
             title="Saved Client Charts"
           >
             <FolderHeart size={18} />
-            <span className="btn-label">Saved Charts</span>
+            <span className="btn-label">Saved</span>
             {savedCount > 0 && <span className="counter-badge">{savedCount}</span>}
           </button>
 
-          {/* Print / Export Report */}
+          {/* Brihat Kundli Patrika PDF Report */}
           <button
             type="button"
             className="nav-btn primary-action-btn"
-            onClick={handlePrint}
-            title="Print / Export Kundli PDF Report"
+            onClick={() => {
+              playSoftClick();
+              onOpenPatrikaModal();
+            }}
+            title="सम्पूर्ण बृहत् जन्मपत्रिका (Real Life Kundli PDF Report)"
           >
             <Printer size={18} />
-            <span className="btn-label">Print / PDF Report</span>
+            <span className="btn-label">बृहत् कुण्डली PDF</span>
           </button>
         </div>
       </div>

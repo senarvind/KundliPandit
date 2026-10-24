@@ -186,3 +186,71 @@ export const VEDIC_REMEDIES_GUIDE = {
   }
 };
 
+export const REAL_LIFE_PROFILES = [
+  {
+    category: "विवाह वर (Groom)",
+    name: "आयुष मिश्रा (Ayush Mishra)",
+    gender: "Male",
+    date: "1995-11-20",
+    time: "09:15:00",
+    city: "Varanasi (Kashi), India",
+    lat: 25.3176,
+    lng: 82.9739,
+    tz: 5.5,
+    ayanamsa: "Lahiri",
+    tag: "सॉफ्टवेयर इंजीनियर • विवाह मिलान हेतु वर कुण्डली"
+  },
+  {
+    category: "विवाह वधू (Bride)",
+    name: "सौम्या शुक्ला (Saumya Shukla)",
+    gender: "Female",
+    date: "1998-04-14",
+    time: "18:30:00",
+    city: "Lucknow, India",
+    lat: 26.8467,
+    lng: 80.9462,
+    tz: 5.5,
+    ayanamsa: "Lahiri",
+    tag: "प्रशासनिक अधिकारी • विवाह मिलान हेतु कन्या कुण्डली"
+  },
+  {
+    category: "नवजात शिशु (Newborn)",
+    name: "आरव त्रिपाठी (Aarav Tripathi)",
+    gender: "Male",
+    date: "2024-03-08",
+    time: "11:42:00",
+    city: "Ayodhya, India",
+    lat: 26.7922,
+    lng: 82.1998,
+    tz: 5.5,
+    ayanamsa: "Lahiri",
+    tag: "शुभ नक्षत्र जन्म • नामकरण एवं मूल शांति विचार"
+  },
+  {
+    category: "करियर व व्यवसाय (Career)",
+    name: "रोहन वर्मा (Rohan Verma)",
+    gender: "Male",
+    date: "1992-08-05",
+    time: "14:25:00",
+    city: "Jaipur, India",
+    lat: 26.9124,
+    lng: 75.7873,
+    tz: 5.5,
+    ayanamsa: "Lahiri",
+    tag: "व्यापारी • स्वतंत्र उद्योग व धन योग परामर्श"
+  },
+  {
+    category: "उच्च शिक्षा/विदेश (Higher Studies)",
+    name: "अनन्या शास्त्री (Ananya Shastri)",
+    gender: "Female",
+    date: "2002-06-18",
+    time: "07:20:00",
+    city: "Haridwar, India",
+    lat: 29.9457,
+    lng: 78.1642,
+    tz: 5.5,
+    ayanamsa: "Lahiri",
+    tag: "शोधार्थी • विदेश यात्रा व उच्च शिक्षा योग"
+  }
+];
+

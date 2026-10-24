@@ -2,22 +2,30 @@ import { Sun, Moon, Clock, Compass, ShieldAlert, Sparkles } from "lucide-react";
 
 export default function DailyPanchang() {
   const today = new Date();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = dayNames[today.getDay()];
+  const dayNamesHindi = [
+    "रविवार (भानुवासर)",
+    "सोमवार (इन्दुवासर)",
+    "मंगलवार (भौमवासर)",
+    "बुधवार (सौम्यवासर)",
+    "गुरुवार (बृहस्पतिवासर)",
+    "शुक्रवार (भृगुवासर)",
+    "शनिवार (मन्दवासर)"
+  ];
+  const currentDayHindi = dayNamesHindi[today.getDay()];
 
   // Vedic panchang elements
   const panchang = {
-    date: today.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
-    vaar: currentDay,
-    tithi: "Shukla Paksha Ekadashi / Dvadashi",
-    nakshatra: "Pushya / Ashlesha",
-    yoga: "Shubha Yoga",
-    karana: "Bava Karana",
-    sunrise: "06:24 AM",
-    sunset: "05:48 PM",
-    abhijit: "11:42 AM - 12:28 PM (Auspicious Muhurat)",
-    rahuKaal: "04:30 PM - 06:00 PM (Inauspicious Period)",
-    moonSign: "Cancer (Karka)"
+    date: today.toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" }),
+    vaar: currentDayHindi,
+    tithi: "शुक्ल पक्ष एकादशी / द्वादशी (Shukla Paksha)",
+    nakshatra: "पुष्य / आश्लेषा (Pushya Nakshatra)",
+    yoga: "शुभ योग (Shubha Yoga)",
+    karana: "बव करण (Bava Karana)",
+    sunrise: "०६:२४ AM",
+    sunset: "०५:४८ PM",
+    abhijit: "११:४२ AM - १२:२८ PM (अति शुभ मुहूर्त)",
+    rahuKaal: "०४:३० PM - ०६:०० PM (वर्जित काल)",
+    moonSign: "कर्क राशि (Cancer)"
   };
 
   return (
@@ -25,34 +33,34 @@ export default function DailyPanchang() {
       <div className="panchang-header">
         <div className="panchang-title">
           <Sparkles className="icon-gold" size={16} />
-          <strong>Live Daily Vedic Panchang</strong>
+          <strong>दैनिक वैदिक पंचांग (Live Vedic Panchang)</strong>
         </div>
         <span className="panchang-date">{panchang.date} | {panchang.vaar}</span>
       </div>
 
       <div className="panchang-grid">
         <div className="panchang-item">
-          <span className="label">Tithi:</span>
+          <span className="label">तिथि (Tithi):</span>
           <span className="val">{panchang.tithi}</span>
         </div>
         <div className="panchang-item">
-          <span className="label">Nakshatra:</span>
+          <span className="label">नक्षत्र (Nakshatra):</span>
           <span className="val">{panchang.nakshatra}</span>
         </div>
         <div className="panchang-item">
-          <span className="label">Auspicious Yoga:</span>
+          <span className="label">नित्य योग (Yoga):</span>
           <span className="val">{panchang.yoga}</span>
         </div>
         <div className="panchang-item">
-          <span className="label">Karana:</span>
+          <span className="label">करण (Karana):</span>
           <span className="val">{panchang.karana}</span>
         </div>
         <div className="panchang-item highlight-green">
-          <span className="label">Abhijit Muhurat:</span>
+          <span className="label">अभिजित मुहूर्त:</span>
           <span className="val">{panchang.abhijit}</span>
         </div>
         <div className="panchang-item highlight-red">
-          <span className="label">Rahu Kaal:</span>
+          <span className="label">राहु काल (अशुभ):</span>
           <span className="val">{panchang.rahuKaal}</span>
         </div>
       </div>

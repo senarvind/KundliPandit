@@ -15,7 +15,11 @@ import GunMilan from "./components/GunMilan";
 import LifePredictions from "./components/LifePredictions";
 import AstrologerNotesModal from "./components/AstrologerNotesModal";
 import SavedChartsDrawer from "./components/SavedChartsDrawer";
+import AIAstrologerModal from "./components/AIAstrologerModal";
+import BrihatKundliPatrika from "./components/BrihatKundliPatrika";
 import { generateLifeInterpretations } from "./utils/interpretationEngine";
+import { calculateAvakahadaChakra } from "./utils/panchangEngine";
+import { generateFullAIFaladesh } from "./utils/aiAstrologerService";
 
 import {
   calculateJulianDay,
@@ -41,7 +45,10 @@ import {
   Heart,
   Gem,
   CheckCircle2,
-  BookOpen
+  BookOpen,
+  Bot,
+  FileDown,
+  Printer
 } from "lucide-react";
 
 export default function App() {
@@ -60,13 +67,16 @@ export default function App() {
 
   const [chartStyle, setChartStyle] = useState("north"); // "north" | "south"
   const [chartViewMode, setChartViewMode] = useState("d1"); // "d1" | "d9" | "dual"
-  const [activeTab, setActiveTab] = useState("charts"); // "charts" | "predictions" | "milan" | "vargas" | "dasha" | "doshas" | "bhavas" | "remedies"
+  const [activeTab, setActiveTab] = useState("charts");
   const [activeHouse, setActiveHouse] = useState(null);
   const [activePlanet, setActivePlanet] = useState(null);
   const [soundOn, setSoundOn] = useState(true);
 
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isSavedDrawerOpen, setIsSavedDrawerOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [isPatrikaModalOpen, setIsPatrikaModalOpen] = useState(false);
+  const [aiFaladesh, setAiFaladesh] = useState(null);
   const [savedCharts, setSavedCharts] = useState([]);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
 
@@ -138,6 +148,25 @@ export default function App() {
     }
   }, [formData]);
 
+  // Compute Avakahada Chakra & Panchang
+  const avakahada = useMemo(() => {
+    if (!kundli) return null;
+    return calculateAvakahadaChakra(kundli, formData);
+  }, [kundli, formData]);
+
+  // Pre-generate AI Faladesh when Kundli is available
+  useEffect(() => {
+    if (kundli && avakahada) {
+      generateFullAIFaladesh(kundli, formData, avakahada)
+        .then((res) => {
+          setAiFaladesh(res);
+        })
+        .catch((err) => {
+          console.error("Initial AI Faladesh generation error:", err);
+        });
+    }
+  }, [formData.name, formData.date, formData.time, formData.city]);
+
   const handleSaveClient = () => {
     const newEntry = { ...formData, id: Date.now() };
     const updated = [newEntry, ...savedCharts.filter((c) => c.name !== newEntry.name)];
@@ -177,6 +206,8 @@ export default function App() {
 
   const navTabs = [
     { key: "charts", label: "Birth Chart & Planets", icon: Compass },
+    { key: "aifaladesh", label: "AI ज्योतिषाचार्य (AI Faladesh)", icon: Bot },
+    { key: "patrika", label: "बृहत् जन्मपत्रिका (8-Page Kundli)", icon: BookOpen },
     { key: "predictions", label: "Life Predictions (Career, Marriage, Money)", icon: Sparkles },
     { key: "milan", label: "Kundli Matching (36 Guna)", icon: Heart },
     { key: "vargas", label: "Divisional Charts (D9/D10/D7)", icon: Layers },
@@ -198,30 +229,41 @@ export default function App() {
         onOpenSavedDrawer={() => setIsSavedDrawerOpen(true)}
         savedCount={savedCharts.length}
         onOpenNotesModal={() => setIsNotesModalOpen(true)}
+        onOpenAIModal={() => setIsAIModalOpen(true)}
+        onOpenPatrikaModal={() => setIsPatrikaModalOpen(true)}
       />
 
       <main className="main-content">
-        {/* Vedic Hero Banner with generated cosmic artwork */}
+        {/* Vedic Hero Banner - Authentic Traditional Vedic Astrology Sanctuary */}
         <section className="hero-banner">
           <div className="hero-bg-overlay"></div>
           <div className="hero-content">
             <div className="hero-emblem-wrap">
-              <img
-                src="/astrologer_avatar.jpg"
-                alt="Vedic Astrologer"
-                className="astrologer-avatar-img"
-              />
+              <div className="astrologer-avatar-border glow-pulse">
+                <img
+                  src="/astrologer_avatar.jpg"
+                  alt="Vedic Astrologer Acharya"
+                  className="astrologer-avatar-img"
+                />
+                <span className="avatar-om-crest">ॐ</span>
+              </div>
             </div>
             <div className="hero-text-block">
               <div className="hero-badge">
-                <Sparkles size={14} /> Vedic Astrology Portal • Birth Chart Kundli Mirror
+                <Sparkles size={14} /> ॥ ॐ श्री गणेशाय नमः ॥ श्री काशी विश्वनाथ प्रामाणिक ज्योतिष संस्थान
               </div>
               <h2 className="hero-title">
-                Vedic Birth Chart & Kundli Horoscope Portal
+                वैदिक जन्म कुण्डली एवं बृहत् जन्मपत्रिका दर्पण
               </h2>
               <p className="hero-subtitle">
-                High-precision planetary positions, Navamsha D-9 chart, Vimshottari Dasha timeline, Manglik Dosha analysis, and 36 Guna Ashtakoot matrimonial compatibility.
+                महर्षि पाराशर होरा शास्त्र एवं वराहमिहिर के प्रामाणिक गणितीय सूत्रों पर आधारित शुद्ध जन्म कुण्डली, १२० वर्षीय विंशोत्तरी महादशा, मांगलिक विचार, ३६ गुण मिलान एवं AI ज्योतिषाचार्य परामर्श।
               </p>
+
+              <div className="hero-highlights-strip">
+                <span className="hl-item">✓ १००% शुद्ध गणितीय अयनांश (Lahiri Ayanamsa)</span>
+                <span className="hl-item">✓ पंडित जी द्वारा मुद्रित वास्तविक ८-पृष्ठीय कुण्डली</span>
+                <span className="hl-item">✓ AI एजेंट द्वारा ऑटो-डेटा निर्माण व त्वरित फलकथन</span>
+              </div>
             </div>
           </div>
         </section>
@@ -250,33 +292,73 @@ export default function App() {
         {/* Client Kundli Details Summary Strip */}
         {kundli && (
           <section className="client-summary-strip glass-card">
-            <div className="summary-item">
-              <span className="s-label">Client Name:</span>
-              <strong className="s-val text-gold">{formData.name}</strong>
+            <div className="summary-details-cluster">
+              <div className="summary-item">
+                <span className="s-label">जातक (Client):</span>
+                <strong className="s-val text-gold">{formData.name}</strong>
+              </div>
+              <div className="summary-item">
+                <span className="s-label">Lagna (लग्न):</span>
+                <strong className="s-val">
+                  {kundli.ascendant.rashi.hindi} ({kundli.ascendant.rashi.english}) {kundli.ascendant.degFormatted}
+                </strong>
+              </div>
+              <div className="summary-item">
+                <span className="s-label">Rashi (राशि):</span>
+                <strong className="s-val">
+                  {moonPlanet?.rashi?.hindi} ({moonPlanet?.rashi?.english})
+                </strong>
+              </div>
+              <div className="summary-item">
+                <span className="s-label">Nakshatra (नक्षत्र):</span>
+                <strong className="s-val">
+                  {moonPlanet?.nakshatra?.hindi || moonPlanet?.nakshatra?.name} (पद {moonPlanet?.nakshatra?.pada})
+                </strong>
+              </div>
+              {avakahada && (
+                <>
+                  <div className="summary-item">
+                    <span className="s-label">गण / नाड़ी:</span>
+                    <strong className="s-val text-gold">
+                      {avakahada.gana.hindi} / {avakahada.nadi.hindi.split(" ")[0]}
+                    </strong>
+                  </div>
+                  <div className="summary-item">
+                    <span className="s-label">तिथि:</span>
+                    <strong className="s-val">
+                      {avakahada.tithi.hindi}
+                    </strong>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="summary-item">
-              <span className="s-label">Ascendant (Lagna):</span>
-              <strong className="s-val">
-                {kundli.ascendant.rashi.english} ({kundli.ascendant.rashi.name}) {kundli.ascendant.degFormatted}
-              </strong>
-            </div>
-            <div className="summary-item">
-              <span className="s-label">Moon Sign (Rashi):</span>
-              <strong className="s-val">
-                {moonPlanet?.rashi?.english} ({moonPlanet?.rashi?.name})
-              </strong>
-            </div>
-            <div className="summary-item">
-              <span className="s-label">Birth Nakshatra:</span>
-              <strong className="s-val">
-                {moonPlanet?.nakshatra?.name} (Pada {moonPlanet?.nakshatra?.pada})
-              </strong>
-            </div>
-            <div className="summary-item">
-              <span className="s-label">Ayanamsa:</span>
-              <strong className="s-val">
-                {formData.ayanamsa} ({kundli.ayanamsa.toFixed(2)}°)
-              </strong>
+
+            <div className="summary-cta-cluster">
+              <button
+                type="button"
+                className="summary-cta-btn ai-btn glow-pulse"
+                onClick={() => {
+                  playTempleChime();
+                  setIsAIModalOpen(true);
+                }}
+                title="AI ज्योतिषाचार्य परामर्श (AI Faladesh & Chat)"
+              >
+                <Bot size={16} />
+                <span>AI ज्योतिषाचार्य परामर्श</span>
+              </button>
+
+              <button
+                type="button"
+                className="summary-cta-btn patrika-btn"
+                onClick={() => {
+                  playSoftClick();
+                  setIsPatrikaModalOpen(true);
+                }}
+                title="सम्पूर्ण ८-पृष्ठीय कुण्डली पत्रिका (PDF View & Print)"
+              >
+                <Printer size={16} />
+                <span>बृहत् जन्मपत्रिका PDF</span>
+              </button>
             </div>
           </section>
         )}
@@ -492,7 +574,147 @@ export default function App() {
                 </div>
               )}
 
-              {/* Tab 2: Life Predictions & Deep Interpretations (Career, Marriage, Money, Relationships) */}
+              {/* Tab 2: AI Jyotish Faladesh (सम्पूर्ण फलकथन) */}
+              {activeTab === "aifaladesh" && (
+                <div className="ai-inline-tab-view glass-card animate-fade-in">
+                  <div className="section-title-bar">
+                    <div className="title-with-icon">
+                      <Bot className="icon-gold" size={24} />
+                      <div>
+                        <h3>AI ज्योतिषाचार्य सम्पूर्ण फलकथन (AI Vedic Faladesh)</h3>
+                        <span className="sub-title-text">
+                          महर्षि पाराशर होरा शास्त्र पर आधारित वास्तविक एवं प्रामाणिक जन्मपत्रिका फलकथन
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="title-actions">
+                      <button
+                        type="button"
+                        className="btn-gold-action"
+                        onClick={() => {
+                          playTempleChime();
+                          setIsAIModalOpen(true);
+                        }}
+                      >
+                        <Bot size={16} />
+                        <span>पंडित जी से संवाद / प्रश्न पूछें</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-primary-action"
+                        onClick={() => {
+                          playSoftClick();
+                          setIsPatrikaModalOpen(true);
+                        }}
+                      >
+                        <Printer size={16} />
+                        <span>बृहत् पत्रिका PDF देखें</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {aiFaladesh ? (
+                    <div className="ai-faladesh-paper inline-paper">
+                      <div className="paper-header-strip">
+                        <span className="engine-badge">
+                          स्रोत: {aiFaladesh.provider} • मॉडल: {aiFaladesh.model}
+                        </span>
+                        <span className="gen-time">
+                          परामर्श दिनांक: {new Date(aiFaladesh.generatedAt).toLocaleDateString("hi-IN")}
+                        </span>
+                      </div>
+                      <div className="paper-body-content">
+                        <pre className="faladesh-formatted-text">{aiFaladesh.content}</pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="ai-empty-placeholder glass-card">
+                      <Sparkles size={40} className="text-gold" />
+                      <h4>आचार्य जी द्वारा जन्मपत्रिका का सम्पूर्ण फलकथन प्राप्त करें</h4>
+                      <p>
+                        जातक {formData.name} की कुंडली के अनुसार करियर, विवाह, धन-संपत्ति, स्वास्थ्य एवं वैदिक उपायों का गहन विश्लेषण तैयार करने के लिए नीचे दिए गए बटन पर क्लिक करें।
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-gold-action large"
+                        onClick={() => {
+                          playTempleChime();
+                          setIsAIModalOpen(true);
+                        }}
+                      >
+                        <Bot size={18} />
+                        <span>एआई सम्पूर्ण फलकथन तैयार करें</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 3: Brihat Kundli Patrika Book Preview Tab */}
+              {activeTab === "patrika" && (
+                <div className="patrika-inline-tab-view glass-card animate-fade-in">
+                  <div className="section-title-bar">
+                    <div className="title-with-icon">
+                      <BookOpen className="icon-gold" size={24} />
+                      <div>
+                        <h3>बृहत् जन्मपत्रिका (Real Life Kundli Book)</h3>
+                        <span className="sub-title-text">
+                          ८ पृष्ठों की सम्पूर्ण प्रामाणिक जन्मपत्रिका - पंचांग, अवकहड़ा चक्र, ग्रह स्थिति, महादशा, राजयोग, भाव फल व उपाय
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="title-actions">
+                      <button
+                        type="button"
+                        className="btn-gold-action"
+                        onClick={() => {
+                          playSoftClick();
+                          setIsPatrikaModalOpen(true);
+                        }}
+                      >
+                        <Printer size={16} />
+                        <span>पत्रिका खोलें एवं PDF डाउनलोड करें</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="patrika-intro-showcase">
+                    <div className="patrika-cover-teaser">
+                      <div className="teaser-om">ॐ</div>
+                      <h4>बृहत् जन्मपत्रिका</h4>
+                      <p className="teaser-client">जातक: <strong>{formData.name}</strong></p>
+                      <div className="teaser-pages-list">
+                        <span>✓ पृष्ठ १: मुखपृष्ठ एवं सम्पूर्ण अवकहड़ा चक्र (पंचांग, गण, योनि, नाड़ी, पाया)</span>
+                        <span>✓ पृष्ठ २: लग्न (D-1) व नवमांश (D-9) कुण्डली चक्र व ग्रह स्पष्ट स्थिति</span>
+                        <span>✓ पृष्ठ ३: १२० वर्षीय विंशोत्तरी महादशा एवं सक्रिय अंतर्दशा विचार</span>
+                        <span>✓ पृष्ठ ४: मांगलिक दोष, कालसर्प, साढ़ेसाती व शुभ राजयोग परीक्षण</span>
+                        <span>✓ पृष्ठ ५: द्वादश भाव (१२ भाव) फल विचार एवं भावेश प्रभाव</span>
+                        <span>✓ पृष्ठ ६: विस्तृत जीवन फल (करियर, व्यवसाय, विवाह, धन, स्वास्थ्य)</span>
+                        <span>✓ पृष्ठ ७: ज्योतिषाचार्य जी का विशेष व्यक्तिगत परामर्श (AI Faladesh)</span>
+                        <span>✓ पृष्ठ ८: अनुभूत वैदिक उपाय, रत्न, रुद्राक्ष, बीज मंत्र व शुभ आशीर्वाद</span>
+                      </div>
+                      <div className="teaser-actions">
+                        <button
+                          type="button"
+                          className="btn-gold-action large"
+                          onClick={() => {
+                            playSoftClick();
+                            setIsPatrikaModalOpen(true);
+                          }}
+                        >
+                          <BookOpen size={18} />
+                          <span>सम्पूर्ण ८-पृष्ठीय पत्रिका देखें व PDF निकालें</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Life Predictions */}
               {activeTab === "predictions" && (
                 <LifePredictions
                   interpretations={lifeInterpretations}
@@ -500,7 +722,7 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 3: 36 Guna Matrimonial Kundli Matching (Milan) */}
+              {/* Tab: 36 Guna Matrimonial Kundli Matching (Milan) */}
               {activeTab === "milan" && (
                 <GunMilan
                   nativeFormData={formData}
@@ -510,7 +732,7 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 4: Divisional Charts */}
+              {/* Tab: Divisional Charts */}
               {activeTab === "vargas" && (
                 <DivisionalCharts
                   divisionalData={kundli.divisionals}
@@ -528,17 +750,17 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 5: Vimshottari Dasha */}
+              {/* Tab: Vimshottari Dasha */}
               {activeTab === "dasha" && (
                 <VimshottariDasha dashaData={kundli.dasha} />
               )}
 
-              {/* Tab 6: Doshas & Auspicious Yogas */}
+              {/* Tab: Doshas & Auspicious Yogas */}
               {activeTab === "doshas" && (
                 <DoshaYogaChecker doshasAndYogas={kundli.doshasYogas} />
               )}
 
-              {/* Tab 7: 12 Houses (Bhavas) Analysis */}
+              {/* Tab: 12 Houses (Bhavas) Analysis */}
               {activeTab === "bhavas" && (
                 <BhavaAnalysis
                   houses={kundli.houses}
@@ -551,7 +773,7 @@ export default function App() {
                 />
               )}
 
-              {/* Tab 8: Gemstones & Vedic Remedies */}
+              {/* Tab: Gemstones & Vedic Remedies */}
               {activeTab === "remedies" && (
                 <RemediesView
                   ascendant={kundli.ascendant}
@@ -562,130 +784,32 @@ export default function App() {
           )}
         </section>
 
-        {/* Printable Astrologer Kundli Certificate (Hidden on screen, strictly 1-page during Print/PDF) */}
+        {/* Real-Life Multi-Page Brihat Janam Kundli Patrika (Preview & Multi-Page Print) */}
         {kundli && (
-          <div className="print-report-container">
-            {/* Header / Invocations */}
-            <div className="print-header">
-              <div className="print-om-invoc">॥ ॐ श्री गणेशाय नमः ॥</div>
-              <h1 className="print-main-title">Vedic Birth Chart Kundli</h1>
-              <div className="print-sub-header">
-                Astrological Consultation Report • Parashara Janam Patrika
-              </div>
+          <BrihatKundliPatrika
+            isOpen={isPatrikaModalOpen}
+            onClose={() => setIsPatrikaModalOpen(false)}
+            kundli={kundli}
+            formData={formData}
+            avakahada={avakahada}
+            aiFaladesh={aiFaladesh}
+            chartStyle={chartStyle}
+            lifeInterpretations={lifeInterpretations}
+          />
+        )}
 
-              {/* Client & Birth Particulars Grid */}
-              <div className="print-meta-grid">
-                <div className="print-meta-cell">
-                  <span className="pm-label">Client Name:</span>
-                  <span className="pm-val"><strong>{formData.name || "Client"}</strong> ({formData.gender || "Male"})</span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Date of Birth:</span>
-                  <span className="pm-val"><strong>{formData.date}</strong></span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Time of Birth:</span>
-                  <span className="pm-val"><strong>{formData.time}</strong></span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Place of Birth:</span>
-                  <span className="pm-val"><strong>{formData.city}</strong></span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Ascendant (Lagna):</span>
-                  <span className="pm-val"><strong>{kundli.ascendant.rashi.english}</strong> ({kundli.ascendant.degFormatted})</span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Moon Sign (Rashi):</span>
-                  <span className="pm-val"><strong>{moonPlanet?.rashi?.english}</strong> ({moonPlanet?.rashi?.name})</span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Birth Nakshatra:</span>
-                  <span className="pm-val"><strong>{moonPlanet?.nakshatra?.name}</strong> (Pada {moonPlanet?.nakshatra?.pada})</span>
-                </div>
-                <div className="print-meta-cell">
-                  <span className="pm-label">Ayanamsa:</span>
-                  <span className="pm-val"><strong>{formData.ayanamsa}</strong> ({kundli.ayanamsa.toFixed(2)}°)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Core Section: Kundli Chart (Left) + Planets Table (Right) */}
-            <div className="print-core-grid">
-              <div className="print-chart-box">
-                {chartStyle === "north" ? (
-                  <NorthIndianChart
-                    chartData={kundli.divisionals.D1}
-                    title="Lagna Kundli (D-1)"
-                  />
-                ) : (
-                  <SouthIndianChart
-                    chartData={kundli.divisionals.D1}
-                    title="Lagna Kundli (D-1)"
-                  />
-                )}
-              </div>
-
-              <div className="print-planets-box">
-                <div className="print-box-heading">Planetary Positions (Graha Sthiti)</div>
-                <table className="print-graha-table">
-                  <thead>
-                    <tr>
-                      <th>Graha</th>
-                      <th>Rashi</th>
-                      <th>Degree</th>
-                      <th>Bhava</th>
-                      <th>Status / Dignity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {kundli.planets.map((p) => (
-                      <tr key={p.id}>
-                        <td><strong>{p.name}</strong> ({p.hindi})</td>
-                        <td>{p.rashi.english}</td>
-                        <td>{p.degFormatted}</td>
-                        <td>House {p.house}</td>
-                        <td>
-                          {p.isRetrograde ? "[R] " : ""}
-                          {p.dignity.split(" ")[0]}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Vimshottari Dasha Summary Strip */}
-            <div className="print-dasha-strip">
-              <div className="print-dasha-label">
-                <strong>Vimshottari Dasha:</strong>
-              </div>
-              <div className="print-dasha-items">
-                <span>Mahadasha: <strong>{kundli.dasha.activeMahadasha?.lord}</strong></span>
-                <span className="p-dot">•</span>
-                <span>Antardasha: <strong>{kundli.dasha.activeAntardasha?.lord || "Active"}</strong></span>
-                <span className="p-dot">•</span>
-                <span>Nakshatra Lord: <strong>{moonPlanet?.nakshatra?.lord}</strong></span>
-              </div>
-            </div>
-
-            {/* Footer / Auspicious Blessing / Signature */}
-            <div className="print-footer">
-              <div className="print-footer-info">
-                <div className="p-auth-txt">Verified Astrological Kundli Report</div>
-                <div className="p-sys-txt">Maharishi Parashara Hora Shastra Principles</div>
-              </div>
-              <div className="print-blessing-wrap">
-                <div className="p-sanskrit">॥ सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः ॥</div>
-                <div className="p-english">"May all beings be happy, healthy, prosperous and peaceful."</div>
-              </div>
-              <div className="print-seal-wrap">
-                <div className="p-seal-head">Astrologer Signature & Seal</div>
-                <div className="seal-line">__________________________</div>
-              </div>
-            </div>
-          </div>
+        {/* AI Astrologer (Pandit Ji) Consultation Modal */}
+        {kundli && (
+          <AIAstrologerModal
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            kundli={kundli}
+            formData={formData}
+            avakahada={avakahada}
+            aiFaladesh={aiFaladesh}
+            setAiFaladesh={setAiFaladesh}
+            onOpenPatrikaModal={() => setIsPatrikaModalOpen(true)}
+          />
         )}
       </main>
 

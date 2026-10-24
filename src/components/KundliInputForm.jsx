@@ -1,7 +1,26 @@
 import { useState } from "react";
-import { CITIES, FAMOUS_CHARTS } from "../data/vedicData";
+import { CITIES, FAMOUS_CHARTS, REAL_LIFE_PROFILES } from "../data/vedicData";
+import {
+  parseBirthDataWithAI,
+  generateRandomRealLifeProfile,
+  getCurrentLiveBirthData
+} from "../utils/aiAstrologerService";
 import { playTempleChime, playSoftClick } from "../utils/soundEffects";
-import { Sparkles, Calendar, Clock, MapPin, User, Compass, BookmarkPlus } from "lucide-react";
+import {
+  Sparkles,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Compass,
+  BookmarkPlus,
+  Bot,
+  Wand2,
+  Dice5,
+  History,
+  CheckCircle2,
+  SendHorizontal
+} from "lucide-react";
 
 export default function KundliInputForm({
   formData,
@@ -13,6 +32,10 @@ export default function KundliInputForm({
 }) {
   const [showCustomGeo, setShowCustomGeo] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [profileTab, setProfileTab] = useState("reallife"); // "reallife" | "famous"
+  const [aiPromptInput, setAiPromptInput] = useState("");
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiSuccessMsg, setAiSuccessMsg] = useState("");
 
   const filteredCities = CITIES.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -33,18 +56,62 @@ export default function KundliInputForm({
   };
 
   const handleLoadSample = (sample) => {
-    playSoftClick();
+    playTempleChime();
     setFormData({
       name: sample.name,
-      gender: sample.gender,
+      gender: sample.gender || "Male",
       date: sample.date,
       time: sample.time,
       city: sample.city,
       lat: sample.lat,
       lng: sample.lng,
-      tz: sample.tz,
-      ayanamsa: "Lahiri"
+      tz: sample.tz || 5.5,
+      ayanamsa: sample.ayanamsa || "Lahiri"
     });
+    setAiSuccessMsg(`जातक "${sample.name}" का विवरण सफलतापूर्वक लोड किया गया!`);
+    setTimeout(() => setAiSuccessMsg(""), 3500);
+  };
+
+  // AI Auto-Fill from free-form natural language text
+  const handleAiAutoFill = async (e) => {
+    e?.preventDefault();
+    if (!aiPromptInput.trim() || isAiProcessing) return;
+
+    setIsAiProcessing(true);
+    playSoftClick();
+
+    try {
+      const parsed = await parseBirthDataWithAI(aiPromptInput);
+      if (parsed) {
+        setFormData(parsed);
+        playTempleChime();
+        setAiSuccessMsg(`AI ने "${parsed.name}" का जन्म विवरण स्वतः तैयार कर दिया!`);
+        setAiPromptInput("");
+      }
+    } catch (err) {
+      console.error("AI parse error:", err);
+    } finally {
+      setIsAiProcessing(false);
+      setTimeout(() => setAiSuccessMsg(""), 4000);
+    }
+  };
+
+  // AI Generate Random Real-Life Native Profile
+  const handleGenerateRandomRealProfile = () => {
+    playTempleChime();
+    const profile = generateRandomRealLifeProfile();
+    setFormData(profile);
+    setAiSuccessMsg(`AI ने वास्तविक जीवन जातक "${profile.name}" का विवरण तैयार किया!`);
+    setTimeout(() => setAiSuccessMsg(""), 3500);
+  };
+
+  // Fill Current Live Date & Time (Prashna Kundli / Newborn)
+  const handleFillLiveTime = () => {
+    playTempleChime();
+    const live = getCurrentLiveBirthData();
+    setFormData(live);
+    setAiSuccessMsg("वर्तमान समय व स्थान (Live Prashna / Newborn) स्वतः भर दिया गया!");
+    setTimeout(() => setAiSuccessMsg(""), 3500);
   };
 
   const handleSubmit = (e) => {
@@ -55,11 +122,18 @@ export default function KundliInputForm({
 
   return (
     <div className="kundli-form-container glass-card">
+      {/* Form Top Title Bar */}
       <div className="form-top-bar">
         <div className="form-header-title">
-          <Sparkles className="icon-gold" size={20} />
-          <h2>Birth Data Entry (Kundli Details)</h2>
+          <div className="om-mini-badge">ॐ</div>
+          <div>
+            <h2>जन्म विवरण प्रविष्टि (Birth Data Entry)</h2>
+            <span className="form-sub-hint">
+              वास्तविक जन्मपत्रिका निर्माण हेतु जातक का नाम, जन्म दिनांक, समय व स्थान दर्ज करें
+            </span>
+          </div>
         </div>
+
         <div className="style-toggles">
           <button
             type="button"
@@ -69,7 +143,7 @@ export default function KundliInputForm({
               setChartStyle("north");
             }}
           >
-            North Indian (Diamond)
+            उत्तर भारतीय (Diamond)
           </button>
           <button
             type="button"
@@ -79,25 +153,121 @@ export default function KundliInputForm({
               setChartStyle("south");
             }}
           >
-            South Indian (Grid)
+            दक्षिण भारतीय (Grid)
           </button>
         </div>
       </div>
 
-      {/* Quick Test Astrological Profiles */}
-      <div className="famous-charts-bar">
-        <span className="sample-label">Quick Test Profiles:</span>
-        <div className="sample-chips">
-          {FAMOUS_CHARTS.map((item, idx) => (
+      {/* ========================================================
+          AI SMART AUTO-FILL AGENT BOX (NEW REQUIREMENT)
+          ======================================================== */}
+      <div className="ai-smart-fill-banner glass-card">
+        <div className="ai-fill-header">
+          <div className="ai-badge-row">
+            <Bot size={18} className="text-gold" />
+            <span className="ai-agent-title">AI जन्म विवरण ऑटो-जनरेटर (AI Smart Auto-Fill Agent)</span>
+            <span className="ai-agent-tag">स्वतः कुण्डली डेटा निर्माण</span>
+          </div>
+
+          <div className="ai-quick-action-btns">
             <button
-              key={idx}
               type="button"
-              className="sample-chip"
-              onClick={() => handleLoadSample(item)}
+              className="ai-action-btn glow-pulse"
+              onClick={handleGenerateRandomRealProfile}
+              title="AI द्वारा वास्तविक जातक का डेटा स्वतः बनाएं"
             >
-              {item.name}
+              <Dice5 size={15} />
+              <span>🎲 AI रियल-लाइफ जातक बनाएं</span>
             </button>
-          ))}
+
+            <button
+              type="button"
+              className="ai-action-btn"
+              onClick={handleFillLiveTime}
+              title="वर्तमान समय व स्थान से कुण्डली बनाएं (Prashna / Newborn Baby)"
+            >
+              <Clock size={15} />
+              <span>🕒 वर्तमान समय (Live Prashna)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Natural Language Prompt Input Bar */}
+        <form onSubmit={handleAiAutoFill} className="ai-prompt-input-row">
+          <div className="prompt-input-wrap">
+            <Wand2 size={16} className="prompt-icon text-gold" />
+            <input
+              type="text"
+              value={aiPromptInput}
+              onChange={(e) => setAiPromptInput(e.target.value)}
+              placeholder="AI को बोलें या लिखें, e.g. 'रोहन शर्मा, 15 जुलाई 1995, दोपहर 2:30 बजे, वाराणसी' या 'Priya, female, 24 Dec 1999, 10:15 AM, Jaipur'..."
+              className="ai-prompt-input"
+              disabled={isAiProcessing}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn-gold-action ai-fill-submit"
+            disabled={!aiPromptInput.trim() || isAiProcessing}
+          >
+            <SendHorizontal size={16} />
+            <span>{isAiProcessing ? "AI तैयार कर रहा है..." : "AI द्वारा भरें"}</span>
+          </button>
+        </form>
+
+        {aiSuccessMsg && (
+          <div className="ai-success-toast animate-fade-in">
+            <CheckCircle2 size={16} className="text-emerald" />
+            <span>{aiSuccessMsg}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Real-Life Native Presets vs Famous Charts */}
+      <div className="famous-charts-bar">
+        <div className="profiles-tab-switcher">
+          <button
+            type="button"
+            className={`ptab-btn ${profileTab === "reallife" ? "active" : ""}`}
+            onClick={() => setProfileTab("reallife")}
+          >
+            ✦ वास्तविक जीवन जातक (Real Life Profiles)
+          </button>
+          <button
+            type="button"
+            className={`ptab-btn ${profileTab === "famous" ? "active" : ""}`}
+            onClick={() => setProfileTab("famous")}
+          >
+            ऐतिहासिक कुण्डलियां (Famous Charts)
+          </button>
+        </div>
+
+        <div className="sample-chips">
+          {profileTab === "reallife" &&
+            REAL_LIFE_PROFILES.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="sample-chip real-life-chip"
+                onClick={() => handleLoadSample(item)}
+                title={item.tag}
+              >
+                <span className="chip-cat">{item.category}:</span>
+                <span className="chip-name">{item.name.split(" ")[0]}</span>
+              </button>
+            ))}
+
+          {profileTab === "famous" &&
+            FAMOUS_CHARTS.map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="sample-chip"
+                onClick={() => handleLoadSample(item)}
+              >
+                {item.name}
+              </button>
+            ))}
         </div>
       </div>
 
